@@ -2,10 +2,10 @@ import numpy as np
 import jaconv
 import time
 
-from beam_search import BeamSearch
-from lm_models.n_gram_lm import NgramModel as LMModel
+from beamsearch_lm.beam_search import BeamSearch
+from beamsearch_lm.lm_models.n_gram_lm import NgramModel as LMModel
 from sklearn.base import BaseEstimator, RegressorMixin
-from utils import calculate_accuracy, load_data_for_training_lm, load_data_from_ocr, preprocess_ocr_logit
+from beamsearch_lm.utils import calculate_accuracy, load_data_for_training_lm, load_data_from_ocr, preprocess_ocr_logit
 
 default_classes = list(
         "()-.・0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ゙゚アイウエオカキクケコサシスセソタチツテトナニヌネノハヒフヘホマミムメモヤユヨ"
