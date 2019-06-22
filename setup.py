@@ -2,7 +2,7 @@ from setuptools import setup
 
 requirements = open('requirements.txt').read().splitlines()
 
-setup(name='Beamsearch_LM',
+setup(name='beamsearch_lm',
       description='Beamsearch With Language Model for CTC Decoding .',
       version='0.1.0',
 
