@@ -1,0 +1,4 @@
+editdistance
+numpy>1.14
+jaconv==0.2.3
+sklearn
