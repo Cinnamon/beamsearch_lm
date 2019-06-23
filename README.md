@@ -19,7 +19,7 @@ lm_model = joblib.load("where_is_your_saving_path")
 input = "ctc_logit_matrix"
 predict = lm_model.predict(input)
 
-print (predict")
+print (predict)
 ```
 
 ## Uninstallation
