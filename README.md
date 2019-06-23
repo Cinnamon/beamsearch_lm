@@ -10,6 +10,7 @@ pip install git+ssh://git@github.com/phvan2312/beamsearch_lm.git
 ## Usage
 The model uses CPU by default. No support for runtime changes for now. To run inference
 ```python
+from sklearn.externals import joblib
 from beamsearch_lm.model_wrapper import SklearnAutoCorrectWrapper
 
 lm_model = joblib.load("where_is_your_saving_path")
