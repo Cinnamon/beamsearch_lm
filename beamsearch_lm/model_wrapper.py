@@ -1,6 +1,7 @@
 import numpy as np
 import jaconv
 import time
+import _pickle as cPickle
 
 from beamsearch_lm.beam_search import BeamSearch
 from beamsearch_lm.lm_models.n_gram_lm import NgramModel as LMModel
@@ -71,6 +72,64 @@ class SklearnAutoCorrectWrapper(BaseEstimator, RegressorMixin):
 
     def predict(self, X, y=None):
         return self.beam_search.search(self.pre_process(X))
+
+    def save(self, output_fn):
+        ge_save_dct = {
+            'classes': self.classes,
+            'n_gram': self.n_gram,
+            'topk': self.topk,
+            'lm_factor':self.lm_factor,
+            'beam_width':self.beam_width,
+            'softmax_theta':self.softmax_theta,
+        }
+
+        lm_save_dct = {
+            "n": self.lm_model.n,
+            "all_ngrams": self.lm_model.all_ngrams,
+            "eps": self.lm_model.eps,
+        }
+
+        bs_save_dct = {
+            'beam_width':self.beam_width,
+            'lm_factor': self.lm_factor,
+            'topk':self.topk,
+            'classes':self.classes,
+        }
+
+        save_dct = {
+            'general': ge_save_dct,
+            'lm': lm_save_dct,
+            'bs': bs_save_dct
+        }
+
+        cPickle.dump(save_dct, open(output_fn, 'wb'))
+
+    @staticmethod
+    def load(saved_fn):
+        save_dct = cPickle.load(open(saved_fn, "rb"))
+
+        # restore
+        ge_save_dct = save_dct['general']
+        ge_save_dct['train_lm_fn'] = ''
+        ge_save_dct['predict_score_logit_fn'] = ''
+
+        model = SklearnAutoCorrectWrapper(**ge_save_dct)
+
+        # restore lm
+        lm_save_dct = save_dct['lm']
+        lm_model = LMModel(lm_save_dct['n'], lm_save_dct['eps'])
+        lm_model.all_ngrams = lm_save_dct['all_ngrams']
+
+        model.lm_model = lm_model
+
+        # restore bs
+        bs_save_dct = save_dct['bs']
+        bs_save_dct['lm_model'] = model.lm_model
+
+        bs = BeamSearch(**bs_save_dct)
+        model.beam_search = bs
+
+        return model
 
     def score(self, X, y=None):
         """
@@ -143,7 +202,6 @@ if __name__ == "__main__":
     print (gs.best_params_)
     print (gs.best_score_)
 
-
     """
     4. Refit and save model
     """
@@ -152,10 +210,26 @@ if __name__ == "__main__":
     lm_model = SklearnAutoCorrectWrapper(**gs.best_params_)
     lm_model.fit(X, y)
 
-    joblib.dump(lm_model, "/home/vanph/Desktop/pets/lm/official/save/lm_model_wrapper.pkl")
+    lm_model.save("/home/vanph/Desktop/pets/lm/official/save/lm_model_wrapper_v2.pkl")
 
+    lm_model = SklearnAutoCorrectWrapper.load("/home/vanph/Desktop/pets/lm/official/save/lm_model_wrapper_v2.pkl")
 
-    lm_model = joblib.load("/home/vanph/Desktop/pets/lm/official/save/lm_model_wrapper.pkl")
-    score = lm_model.score(X, y)
+    mapping_inout = load_data_from_ocr(ocr_output_src_folder)
 
-    print (score)
+    preds = []
+    lbls = []
+
+    for input_fn, lbl in mapping_inout.items():
+        print("processing:", input_fn)
+        ctc_logit_matrix = np.load(input_fn)
+
+        predict = lm_model.predict(ctc_logit_matrix)
+        preds += [jaconv.normalize(predict)]
+        lbls += [jaconv.normalize(lbl)]
+
+    """
+    3. Return the accuracy by character, exact match
+    """
+    acc_by_char, em = calculate_accuracy(preds, lbls)
+
+    print(acc_by_char, em)

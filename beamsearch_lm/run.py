@@ -17,7 +17,7 @@ if __name__ == "__main__":
         print ("training language model again ...")
 
         train_data_fn = "./lm_data/normed_kana_names.txt"
-        n_gram = 5 #4 # use 3 for context, 1 for token
+        n_gram = 5
 
         lm_model = LMModel(n = n_gram)
         train_sentences, train_charset = load_data_for_training_lm(train_data_fn)
